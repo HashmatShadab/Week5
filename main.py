@@ -15,7 +15,7 @@ epochs = 10
 batch_size = 256
 transform = config.data_transform
 # Load Data
-train_loader, val_loader = dog_dataset(bs=batch_size)
+train_loader, val_loader = cub_dataset(bs=batch_size)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Load Model
@@ -52,37 +52,4 @@ train_model(10, train_loader, val_loader, optimizer, criterion, model, 'diet')
 
 
 
-
-
-
-# def train(epochs, train_loader, test_loader, model, criterion, optimizer):
-#     for epoch in range(epochs):
-#         with tqdm(train_loader) as p_bar:
-#             for samples, targets in p_bar:
-#                 p_bar.set_description(f"Epoch {epoch}")
-#                 samples = samples.to(device)
-#                 targets = targets.to(device)
-#
-#                 outputs = model(samples, fine_tune=True)
-#                 loss = criterion(outputs, targets)
-#
-#                 loss_value = loss.item()
-#                 if not math.isfinite(loss_value):
-#                     print("Loss is {}, stopping training".format(loss_value))
-#                     sys.exit(1)
-#                 optimizer.zero_grad()
-#                 loss.backward()
-#                 optimizer.step()
-#                 p_bar.set_postfix({'loss': loss_value})
-#     print('Testing....')
-#     acc = 0
-#     with tqdm(test_loader) as p_bar:
-#         for samples, targets in p_bar:
-#             samples = samples.to(device)
-#             targets = targets.to(device)
-#
-#             outputs = model(samples, fine_tune=True)
-#             acc += torch.sum(outputs.argmax(dim=-1) == targets).item()
-#
-#     print('Accuracy:{0:.3%}'.format(acc / len(test_dataset)))
 # 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

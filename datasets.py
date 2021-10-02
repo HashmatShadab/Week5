@@ -170,3 +170,33 @@ def food_dataset(data_dir = "/home/u20020019/Fall 2021/CV703 Lab/Week5/food_data
     return train_loader, val_loader
 
 
+def cub_and_dogs(cub_root = "/home/u20020019/TransFG/CUB_200_2011",
+                 dog_root = "/home/u20020019/Fall 2021/CV703 Lab/Week5/dog/",
+                data_transform = transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+                                                    ])
+                 ):
+
+
+
+    train_dataset_cub = CUBDataset(image_root_path=f"{cub_root}", transform=data_transform, split="train")
+    test_dataset_cub = CUBDataset(image_root_path=f"{cub_root}", transform=data_transform, split="test")
+
+
+    train_dataset_dog = DOGDataset(image_root_path=f"{dog_root}", transform=data_transform, split="train")
+    test_dataset_dog = DOGDataset(image_root_path=f"{dog_root}", transform=data_transform, split="test")
+
+
+    train_dataloader = torch.utils.data.DataLoader(
+                 torch.utils.data.ConcatDataset([train_dataset_cub, train_dataset_dog]),
+                 batch_size=1, shuffle=True,
+                 num_workers=1, pin_memory=True)
+
+    test_dataloader = torch.utils.data.DataLoader(
+                 torch.utils.data.ConcatDataset([test_dataset_cub, test_dataset_dog]),
+                 batch_size=1, shuffle=True,
+                 num_workers=1, pin_memory=True)
+
+    return train_dataloader, test_dataloader
