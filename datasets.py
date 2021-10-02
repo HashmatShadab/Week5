@@ -114,7 +114,7 @@ class FOODDataset(torch.utils.data.Dataset):
 
 
 
-def dog_dataset(data_root = "/home/u20020019/Fall 2021/CV703 Lab/Week5/dog/",
+def dog_dataset(data_root = "/home/u20020053/Documents/CV 703/fine_grained_classification/datasets/dog/",
             data_transform=transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -133,7 +133,7 @@ def dog_dataset(data_root = "/home/u20020019/Fall 2021/CV703 Lab/Week5/dog/",
     return train_loader, test_loader
 
 
-def cub_dataset(data_root="/home/u20020019/TransFG/CUB_200_2011",
+def cub_dataset(data_root="/home/u20020053/Documents/CV 703/fine_grained_classification/datasets/CUB_200_2011",
                 data_transform=transforms.Compose([
                     transforms.Resize((224, 224)),
                     transforms.ToTensor(),
@@ -149,7 +149,7 @@ def cub_dataset(data_root="/home/u20020019/TransFG/CUB_200_2011",
 
 
 
-def food_dataset(data_dir = "/home/u20020019/Fall 2021/CV703 Lab/Week5/food_dataset", bs=32
+def food_dataset(data_dir = "/home/u20020053/Documents/CV 703/fine_grained_classification/datasets/food_dataset", bs=32
                  ):
 
 
