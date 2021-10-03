@@ -88,7 +88,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        if i % 2 == 0:
+        if i % 5 == 0:
             progress.display(i)
 
 
@@ -107,6 +107,7 @@ def validate(val_loader, model, criterion):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     with torch.no_grad():
         end = time.time()
+        acc = 0
         for i, (images, target) in enumerate(val_loader):
             images = images.to(device)
             target = target.to(device)
@@ -114,7 +115,7 @@ def validate(val_loader, model, criterion):
             # compute output
             output = model(images)
             loss = criterion(output, target)
-
+            #acc += torch.sum(output.argmax(dim=-1) == target).item()
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
@@ -125,8 +126,9 @@ def validate(val_loader, model, criterion):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            if i % 2== 0:
+            if i % 5== 0:
                 progress.display(i)
+        #print('Accuracy of val set:{0:.3%}'.format(acc / (len(val_loader)*target.shape[0])))
 
         # TODO: this should also be done with the ProgressMeter
         print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
@@ -196,12 +198,15 @@ def accuracy(output, target, topk=(1,)):
         batch_size = target.size(0)
 
         _, pred = output.topk(maxk, 1, True, True)
-        pred = pred.t()
-        correct = pred.eq(target.view(1, -1).expand_as(pred))
+        #pred = pred.t()
+        #correct = pred.eq(target.view(1, -1).expand_as(pred))
+        target = target.reshape((target.shape[0], 1))
+        target = target.repeat(1, maxk)
+        correct = pred.eq(target)
 
         res = []
         for k in topk:
-            correct_k = correct[0:k+1].reshape((-1)).float().sum(0, keepdim=True)
+            correct_k = correct[:, 0:k+1].reshape((-1)).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
 
