@@ -28,7 +28,7 @@ class CUBDataset(torchvision.datasets.ImageFolder):
     Dataset class for CUB Dataset
     """
 
-    def __init__(self, image_root_path, caption_root_path=None, split="train", *args, **kwargs):
+    def __init__(self, image_root_path, caption_root_path=None, split="train", concat=False, *args, **kwargs):
         """
         Args:
             image_root_path:      path to dir containing images and lists folders
@@ -43,12 +43,35 @@ class CUBDataset(torchvision.datasets.ImageFolder):
         self.split_info = {self.image_id_to_name[y[0]]: y[1] for y in [x.strip().split(" ") for x in split_info]}
         self.split = "1" if split == "train" else "0"
         self.caption_root_path = caption_root_path
-
+        self.concat = concat
         super(CUBDataset, self).__init__(root=f"{image_root_path}/images", is_valid_file=self.is_valid_file,
                                          *args, **kwargs)
 
     def is_valid_file(self, x):
         return self.split_info[(x[len(self.root) + 1:])] == self.split
+
+
+    def _find_classes(self, dir: str):
+        """
+        Finds the class folders in a dataset.
+
+        Args:
+            dir (string): Root directory path.
+
+        Returns:
+            tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
+
+        Ensures:
+            No class is a subdirectory of another.
+        """
+        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
+        classes.sort()
+        if self.concat:
+            class_to_idx = {cls_name: i+120 for i, cls_name in enumerate(classes)}
+        else:
+            class_to_idx = {cls_name: i  for i, cls_name in enumerate(classes)}
+
+        return classes, class_to_idx
 
     @staticmethod
     def get_file_content(file_path):
@@ -97,6 +120,9 @@ class DOGDataset(torchvision.datasets.ImageFolder):
         super(DOGDataset, self).__init__(root=f"{image_root_path}Images", is_valid_file=self.is_valid_file,
                                          *args, **kwargs)
 
+
+
+
     def is_valid_file(self, x):
         return self.split_info[(x[len(self.root) + 1:])] == self.split
 
@@ -130,7 +156,7 @@ class FOODDataset(torch.utils.data.Dataset):
 
 
 
-def dog_dataset(data_root = "/home/u20020053/Documents/CV 703/fine_grained_classification/datasets/dog/",
+def dog_dataset(data_root = "/home/u20020019/Fall 2021/CV703 Lab/Week5/datasets/dog/",
             data_transform=transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -152,7 +178,7 @@ def dog_dataset(data_root = "/home/u20020053/Documents/CV 703/fine_grained_class
     return train_loader, val_loader, test_loader
 
 
-def cub_dataset(data_root="/home/u20020053/Documents/CV 703/fine_grained_classification/datasets/CUB_200_2011",
+def cub_dataset(data_root="/home/u20020019/TransFG/CUB_200_2011",
                 data_transform=transforms.Compose([
                     transforms.Resize((224, 224)),
                     transforms.ToTensor(),
@@ -173,7 +199,7 @@ def cub_dataset(data_root="/home/u20020053/Documents/CV 703/fine_grained_classif
 
 
 
-def food_dataset(data_dir = "/home/u20020053/Documents/CV 703/fine_grained_classification/datasets/food_dataset",
+def food_dataset(data_dir = "/home/u20020019/Fall 2021/CV703 Lab/Week5/datasets/food_dataset",
                  data_transform=transforms.Compose([
                      transforms.Resize((224, 224)),
                      transforms.ToTensor(),
@@ -204,8 +230,11 @@ def food_dataset(data_dir = "/home/u20020053/Documents/CV 703/fine_grained_class
     return train_loader, val_loader, test_loader
 
 
-def cub_and_dogs(cub_root = "/home/u20020053/Documents/CV 703/fine_grained_classification/datasets/CUB_200_2011",
-                 dog_root = "/home/u20020053/Documents/CV 703/fine_grained_classification/datasets/dog/",
+
+
+
+def cub_and_dogs(cub_root = "/home/u20020019/TransFG/CUB_200_2011",
+                 dog_root = "/home/u20020019/Fall 2021/CV703 Lab/Week5/datasets/dog/",
                 data_transform = transforms.Compose([
                 transforms.Resize((224, 224)),
                 transforms.ToTensor(),
@@ -216,11 +245,7 @@ def cub_and_dogs(cub_root = "/home/u20020053/Documents/CV 703/fine_grained_class
 
 
 
-    train_dataset_cub = CUBDataset(image_root_path=f"{cub_root}", transform=data_transform, split="train")
-    lengths = [int(len(train_dataset_cub) * 0.9), int(len(train_dataset_cub) * 0.1) + 1]
-    torch.manual_seed(0)
-    train_set_cub, val_set_cub = random_split(train_dataset_cub, lengths)
-    test_dataset_cub = CUBDataset(image_root_path=f"{cub_root}", transform=test_transform, split="test")
+
 
 
     train_dataset_dog = DOGDataset(image_root_path=f"{dog_root}", transform=data_transform, split="train")
@@ -229,20 +254,26 @@ def cub_and_dogs(cub_root = "/home/u20020053/Documents/CV 703/fine_grained_class
     train_set_dog, val_set_dog = random_split(train_dataset_dog, lengths)
     test_dataset_dog = DOGDataset(image_root_path=f"{dog_root}", transform=test_transform, split="test")
 
+    train_dataset_cub = CUBDataset(image_root_path=f"{cub_root}", transform=data_transform, split="train", concat=True)
+    lengths = [int(len(train_dataset_cub) * 0.9), int(len(train_dataset_cub) * 0.1) + 1]
+    torch.manual_seed(0)
+    train_set_cub, val_set_cub = random_split(train_dataset_cub, lengths)
+    test_dataset_cub = CUBDataset(image_root_path=f"{cub_root}", transform=test_transform, split="test", concat=True)
+
 
     train_dataloader = torch.utils.data.DataLoader(
-                 torch.utils.data.ConcatDataset([train_set_cub, train_set_dog]),
+                 torch.utils.data.ConcatDataset([train_set_dog, train_set_cub]),
                  batch_size=bs, shuffle=True,
                  num_workers=1, pin_memory=True)
 
     val_dataloader = torch.utils.data.DataLoader(
-        torch.utils.data.ConcatDataset([val_set_cub, val_set_dog]),
+        torch.utils.data.ConcatDataset([val_set_dog, val_set_cub ]),
         batch_size=bs, shuffle=True,
         num_workers=1, pin_memory=True)
 
 
     test_dataloader = torch.utils.data.DataLoader(
-                 torch.utils.data.ConcatDataset([test_dataset_cub, test_dataset_dog]),
+                 torch.utils.data.ConcatDataset([test_dataset_dog, test_dataset_cub]),
                  batch_size=bs, shuffle=False,
                  num_workers=1, pin_memory=True)
 
@@ -252,3 +283,4 @@ def cub_and_dogs(cub_root = "/home/u20020053/Documents/CV 703/fine_grained_class
 if __name__ == "__main__":
     train_loader, val_loader, test_loader = cub_and_dogs()
     data, labels = next(iter(test_loader))
+    a=2
