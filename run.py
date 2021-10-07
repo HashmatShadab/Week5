@@ -18,7 +18,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
 
-
+torch.manual_seed(42)
 def train_model(epochs, train_loader, val_loader, optimizer, criterion, model, arch):
     best_acc1 = 0
 
