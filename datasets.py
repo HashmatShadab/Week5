@@ -14,7 +14,7 @@ import scipy.io
 from PIL import Image
 import pandas as pd
 from torch.utils.data.dataset import random_split
-
+torch.manual_seed(42)
 
 test_transform=transforms.Compose([
                     transforms.Resize((224, 224)),
@@ -156,7 +156,7 @@ class FOODDataset(torch.utils.data.Dataset):
 
 
 
-def dog_dataset(data_root = "/home/u20020019/Fall 2021/CV703 Lab/Week5/datasets/dog/",
+def dog_dataset(data_root = "./datasets/dog/",
             data_transform=transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -178,7 +178,7 @@ def dog_dataset(data_root = "/home/u20020019/Fall 2021/CV703 Lab/Week5/datasets/
     return train_loader, val_loader, test_loader
 
 
-def cub_dataset(data_root="/home/u20020019/TransFG/CUB_200_2011",
+def cub_dataset(data_root="./datasets/CUB_200_2011",
                 data_transform=transforms.Compose([
                     transforms.Resize((224, 224)),
                     transforms.ToTensor(),
@@ -199,7 +199,7 @@ def cub_dataset(data_root="/home/u20020019/TransFG/CUB_200_2011",
 
 
 
-def food_dataset(data_dir = "/home/u20020019/Fall 2021/CV703 Lab/Week5/datasets/food_dataset",
+def food_dataset(data_dir = "./datasets/food_dataset",
                  data_transform=transforms.Compose([
                      transforms.Resize((224, 224)),
                      transforms.ToTensor(),
@@ -233,8 +233,8 @@ def food_dataset(data_dir = "/home/u20020019/Fall 2021/CV703 Lab/Week5/datasets/
 
 
 
-def cub_and_dogs(cub_root = "/home/u20020019/TransFG/CUB_200_2011",
-                 dog_root = "/home/u20020019/Fall 2021/CV703 Lab/Week5/datasets/dog/",
+def cub_and_dogs(cub_root = "./datasets/CUB_200_2011",
+                 dog_root = "./datasets/dog/",
                 data_transform = transforms.Compose([
                 transforms.Resize((224, 224)),
                 transforms.ToTensor(),
