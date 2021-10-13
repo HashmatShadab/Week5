@@ -1,5 +1,5 @@
 from functools import partial
-
+import timm
 import torch
 import torch.nn as nn
 import torchvision
@@ -139,4 +139,65 @@ def resnet50(pretrained=False, progress=True, **kwargs):
     if pretrained:
         state_dict = torch.hub.load_state_dict_from_url(torchvision.models.resnet.model_urls[arch], progress=progress)
         model.load_state_dict(state_dict)
+    return model
+
+class MyResnetv2_c_loss(nn.Module):
+    """
+    Using resnetv2 from timm library, Added another fc layer to project features to 512-dim before
+    passing to the classification head.
+    """
+
+    def __init__(self, num_classes):
+        super(MyResnetv2_c_loss, self).__init__()
+        model = timm.create_model('resnetv2_50x1_bitm', pretrained=True)
+        model.head = nn.Identity()
+        self.feature = nn.Sequential(model,
+                                     nn.AdaptiveAvgPool2d((1,1)),
+                                     nn.Flatten(),
+                                     nn.Linear(in_features=2048, out_features=512),
+                                     nn.ReLU(),
+                                     )
+        #self.feature = model
+        self.head = nn.Sequential(
+
+                                     nn.Linear(in_features=512, out_features=num_classes)
+                                     )
+
+    def forward(self, x):
+        features = self.feature(x)
+        x = self.head(features)
+        return features, x
+
+def myresnetv2_for_c_loss(num_classes=200):
+    model = MyResnetv2_c_loss(num_classes=num_classes)
+    return model
+
+
+class MyResnetv2(nn.Module):
+    """
+    Using resnetv2 from timm library, Added another fc layer to project features to 512-dim before
+    passing to the classification head.
+    """
+
+    def __init__(self, num_classes):
+        super(MyResnetv2, self).__init__()
+        model = timm.create_model('resnetv2_50x1_bitm', pretrained=True)
+        model.head = nn.Identity()
+        self.feature = nn.Sequential(model,
+                                     nn.AdaptiveAvgPool2d((1,1)),
+                                     nn.Flatten(),
+                                     )
+        #self.feature = model
+        self.head = nn.Sequential(
+
+                                     nn.Linear(in_features=2048, out_features=num_classes)
+                                     )
+
+    def forward(self, x):
+        features = self.feature(x)
+        x = self.head(features)
+        return features, x
+
+def myresnetv2(num_classes=200):
+    model = MyResnetv2(num_classes=num_classes)
     return model
