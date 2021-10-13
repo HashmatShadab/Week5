@@ -19,32 +19,36 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 
 
-def train_model(epochs, train_loader, val_loader, optimizer, criterion, model, arch):
+def train_model(epochs, train_loader, val_loader, test_loader, optimizer, criterion, model, arch, is_train):
     best_acc1 = 0
 
+    if not is_train:
 
-    for epoch in range(epochs):
+        acc2 = validate(val_loader, model, criterion)
+        acc1 = validate(test_loader, model, criterion)
+    else:
 
-        #adjust_learning_rate(optimizer, epoch, args)
+        for epoch in range(epochs):
 
-        # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch)
+            #adjust_learning_rate(optimizer, epoch, args)
+            # train for one epoch
+            train(train_loader, model, criterion, optimizer, epoch)
 
-        # evaluate on validation set
-        acc1 = validate(val_loader, model, criterion)
+            # evaluate on validation set
+            acc1 = validate(val_loader, model, criterion)
 
-        # remember best acc@1 and save checkpoint
-        is_best = acc1 > best_acc1
-        best_acc1 = max(acc1, best_acc1)
+            # remember best acc@1 and save checkpoint
+            is_best = acc1 > best_acc1
+            best_acc1 = max(acc1, best_acc1)
 
 
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'arch': arch,
-            'state_dict': model.state_dict(),
-            'best_acc1': best_acc1,
-            'optimizer' : optimizer.state_dict(),
-        }, is_best)
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'arch': arch,
+                'state_dict': model.state_dict(),
+                'best_acc1': best_acc1,
+                'optimizer' : optimizer.state_dict(),
+            }, is_best)
 
 
 def train(train_loader, model, criterion, optimizer, epoch):
@@ -140,7 +144,11 @@ def validate(val_loader, model, criterion):
 def save_checkpoint(state, is_best, filename='./datasets/checkpoint.pth.tar'):
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, './datasets/model_best.pth.tar')
+
+        shutil.copyfile(filename, f"./datasets/model{state['arch']}_best.pth.tar")
+
+
+
 
 
 class AverageMeter(object):
@@ -206,7 +214,6 @@ def accuracy(output, target, topk=(1,)):
 
         res = []
         for k in topk:
-            correct_k = correct[:, 0:k+1].reshape((-1)).float().sum(0, keepdim=True)
+            correct_k = correct[:, 0:k].reshape((-1)).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
-
