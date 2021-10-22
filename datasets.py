@@ -17,7 +17,7 @@ from torch.utils.data.dataset import random_split
 torch.manual_seed(42)
 
 test_transform=transforms.Compose([
-                    transforms.Resize((224, 224)),
+                    transforms.Resize((384, 384)),
                     transforms.ToTensor(),
                     transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
                 ])
@@ -161,7 +161,15 @@ def dog_dataset(data_root = "./datasets/dog/",
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
-        ]), bs=32):
+        ]),
+            test_transform=transforms.Compose([
+                    transforms.Resize((384, 384)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+                ]),
+
+
+                bs=32):
 
 
 
@@ -183,7 +191,14 @@ def cub_dataset(data_root="./datasets/CUB_200_2011",
                     transforms.Resize((224, 224)),
                     transforms.ToTensor(),
                     transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
-                ]), bs=32):
+                ]),
+                test_transform=transforms.Compose([
+                    transforms.Resize((384, 384)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+                ]),
+
+                bs=32):
 
     train_dataset = CUBDataset(image_root_path=f"{data_root}", transform=data_transform, split="train")
     lengths = [int(len(train_dataset) * 0.9), int(len(train_dataset) * 0.1) + 1]
@@ -205,6 +220,12 @@ def food_dataset(data_dir = "./datasets/food_dataset",
                      transforms.ToTensor(),
                      transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
                  ]),
+                test_transform=transforms.Compose([
+                    transforms.Resize((384, 384)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+                ]),
+
                     bs=32
                  ):
 
@@ -240,6 +261,14 @@ def cub_and_dogs(cub_root = "./datasets/CUB_200_2011",
                 transforms.ToTensor(),
                 transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
                                                     ]),
+                test_transform=transforms.Compose([
+                    transforms.Resize((384, 384)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+                ]),
+
+
+
                  bs=32
                  ):
 

@@ -37,3 +37,12 @@ data_transform4 = transforms.Compose([  #
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=std)
     ])
+data_transform5 = transforms.Compose([  #
+
+        transforms.CenterCrop(384),
+        transforms.RandomRotation(20),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.GaussianBlur(3, sigma=(0.1, 2.0)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean, std=std)
+    ])

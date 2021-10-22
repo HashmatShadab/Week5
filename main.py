@@ -15,9 +15,14 @@ import timm
 epochs = 50
 batch_size = 128
 torch.manual_seed(42)
+test_transform=transforms.Compose([
+                    transforms.Resize((384, 384)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+                ]),
 transform = config.data_transform2
 # Load Data
-train_loader, val_loader,test_loader = cub_dataset(bs=batch_size)
+train_loader, val_loader,test_loader = cub_dataset(bs=batch_size, data_transform=transform, test_transform=test_transform)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # model =  NesT(
 #     image_size = 224,
