@@ -1,5 +1,5 @@
 from datasets import dog_dataset, cub_dataset, food_dataset
-from models.models_to_finetune import deit_small_patch16_224
+from models.models_to_finetune import deit_small_patch16_224, myresnetv2_task1, myresnetv2_task2, myresnetv2_for_c_loss
 import PIL
 import numpy as np
 from tqdm import tqdm

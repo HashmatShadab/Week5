@@ -173,31 +173,62 @@ def myresnetv2_for_c_loss(num_classes=200):
     return model
 
 
-class MyResnetv2(nn.Module):
-    """
-    Using resnetv2 from timm library, Added another fc layer to project features to 512-dim before
-    passing to the classification head.
-    """
+class MyResnetv2_task2(nn.Module):
 
     def __init__(self, num_classes):
-        super(MyResnetv2, self).__init__()
+        super(MyResnetv2_task2, self).__init__()
         model = timm.create_model('resnetv2_50x1_bitm', pretrained=True)
         model.head = nn.Identity()
         self.feature = nn.Sequential(model,
-                                     nn.AdaptiveAvgPool2d((1,1)),
+                                     nn.AdaptiveAvgPool2d((1, 1)),
                                      nn.Flatten(),
                                      )
-        #self.feature = model
+        # self.feature = model
         self.head = nn.Sequential(
 
-                                     nn.Linear(in_features=2048, out_features=num_classes)
-                                     )
+            nn.Linear(in_features=2048, out_features=num_classes)
+        )
 
     def forward(self, x):
         features = self.feature(x)
         x = self.head(features)
-        return features, x
+        return x
 
-def myresnetv2(num_classes=200):
-    model = MyResnetv2(num_classes=num_classes)
+
+def myresnetv2_task2(num_classes=320):
+    model = MyResnetv2_task2(num_classes=num_classes)
     return model
+
+
+class MyResnetv2_task1(nn.Module):
+
+    def __init__(self, num_classes):
+        super(MyResnetv2_task1, self).__init__()
+        model = timm.create_model('resnetv2_50x1_bitm', pretrained=True)
+        model.head = nn.Identity()
+        self.backbone = nn.Sequential(model,
+                                      nn.AdaptiveAvgPool2d((1, 1))
+                                      )
+
+        # self.feature = model
+        self.head = nn.Sequential(nn.Flatten(),
+
+                                  nn.Linear(in_features=2048, out_features=num_classes)
+                                  )
+
+    def forward(self, x):
+        features = self.backbone(x)
+        x = x.reshape((x.shape[0], -1))
+        x = self.head(features)
+        return x
+
+
+def myresnetv2_task1(num_classes=200):
+    model = MyResnetv2_task1(num_classes=num_classes)
+    return model
+
+
+if __name__ == "__main__":
+    img = torch.randn(1, 3, 224, 224)
+    model = myresnetv2()
+    output = model(img)
