@@ -23,7 +23,7 @@ def train_model_with_closs(epochs, train_loader, val_loader, test_loader, optimi
     best_acc1 = 0
 
     if not is_train:
-        #a1 = validate(val_loader, model, crit_ent, crit_closs)
+        a1 = validate(val_loader, model, crit_ent, crit_closs)
         a2 = validate(test_loader, model, crit_ent, crit_closs)
     else:
         for epoch in range(epochs):
