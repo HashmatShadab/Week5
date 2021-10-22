@@ -12,7 +12,7 @@ import config
 import sys
 import math
 from run_center_loss import train_model_with_closs
-from centerloss import CenterLoss
+from loss import CenterLoss
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 batch_size = 56
 transform = [config.data_transform, config.data_transform1, config.data_transform2, config.data_transform3, config.data_transform5]
