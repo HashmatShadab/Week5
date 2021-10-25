@@ -1,5 +1,6 @@
 from datasets import dog_dataset, cub_dataset, food_dataset
 from models.models_to_finetune import deit_small_patch16_224, myresnetv2_task1, myresnetv2_task2, myresnetv2_for_c_loss
+from models import bilinear_model
 import PIL
 import numpy as np
 from tqdm import tqdm
@@ -33,8 +34,8 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 #     block_repeats = (8, 4, 1),  # the number of transformer blocks at each heirarchy, starting from the bottom
 #     num_classes = 10
 # )
-model = myresnetv2_task2(num_classes=320)
-
+#model = myresnetv2_task2(num_classes=320)
+model = bilinear_model.TransFuse_S()
 model = model.to(device)
 
 for param in model.parameters():
@@ -66,7 +67,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.00001, betas=(0.5, 0.999))
 
 criterion = torch.nn.CrossEntropyLoss()
 
-train_model(epochs, train_loader, val_loader, test_loader, optimizer, criterion, model, 'model_name', is_train=False)
+train_model(epochs, train_loader, val_loader, test_loader, optimizer, criterion, model, 'fusion_model_with_pretrained_weights_on_cub_and_dogs', is_train=False)
 
 
 

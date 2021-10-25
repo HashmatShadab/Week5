@@ -4,10 +4,10 @@ import timm
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 import torch.nn.functional as F
 from torchvision.models import resnet34 as resnet
-from .DieT import deit_small_patch16_224 as deit
-from .cait_fuse import Cait_fuse
+from DieT import deit_small_patch16_224 as deit
+from cait_fuse import Cait_fuse
 import math
-
+from models_to_finetune import myresnetv2_task2
 
 class ChannelPool(nn.Module):
     def forward(self, x):
@@ -311,8 +311,49 @@ def myresnetv2(freeze =True):
     model = MyResnetv2_fusion(freeze_layers= freeze)
     return model
 
+#######################################################################################
+class MyResnetv2_fusion_finetune_pretraining(nn.Module):
+    """
+    Using resnetv2 from timm library, Added another fc layer to project features to 512-dim before
+    passing to the classification head.
+    """
 
+    def __init__(self, freeze_layers=False):
+        super(MyResnetv2_fusion_finetune_pretraining, self).__init__()
+        model = timm.create_model('resnetv2_50x1_bitm', pretrained=True)
+        model.head = nn.Identity()
+        if freeze_layers:
+            for parameter in model.parameters():
+                parameter.requires_grad = False
+
+        self.model = model
+
+        self.head = nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                                   nn.Flatten(),
+                                   nn.Linear(in_features=2048, out_features=320),
+                                   )
+
+        # self.conv = nn.Sequential(
+        #     nn.Conv2d(1024, 256, 1),
+        #     nn.BatchNorm2d(256),
+        #     nn.ReLU()
+        # )
+
+    def forward(self, x):
+        x = self.model(x)
+        x = self.head(x)
+        return x
+
+
+def myresnetv2_finetune_pretraining(freeze =False):
+    model = MyResnetv2_fusion_finetune_pretraining(freeze_layers= freeze)
+    return model
+
+
+
+#########################################################################################
 if __name__ =="__main__":
     img = torch.randn(1, 3, 384, 384)
-    model = TransFuse_S()
+    model = myresnetv2_finetune_pretraining()
     out = model(img)
+    print(out.shape)
