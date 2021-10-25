@@ -80,7 +80,7 @@ class GBLoss(torch.nn.Module):
         x1 = x.clone()
         x1[range(x1.size(0)), y] = -float("Inf")
         x_gt = x[range(x.size(0)), y].unsqueeze(1)
-        x_topk = torch.topk(x1, 15, dim=1)[0]  # 15 Negative classes to focus on, its a hyperparameter
+        x_topk = torch.topk(x1, 25, dim=1)[0]  # 25 Negative classes to focus on, its a hyperparameter
         x_new = torch.cat([x_gt, x_topk], dim=1)
 
         return self.ce(x_new, torch.zeros(x_new.size(0)).cuda().long())

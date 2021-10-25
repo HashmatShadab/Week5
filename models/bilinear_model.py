@@ -5,9 +5,9 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 import torch.nn.functional as F
 from torchvision.models import resnet34 as resnet
 from .DieT import deit_small_patch16_224 as deit
-from .cait_fuse import Cait_fuse
+from .cait_fuse import Cait_fuse, Cait_fusev2
 import math
-
+from .models_to_finetune import myresnetv2_task2
 
 class ChannelPool(nn.Module):
     def forward(self, x):
@@ -116,7 +116,59 @@ class TransFuse_S(nn.Module):
 
         self.up_c.apply(init_weights)
 
+#############################################
+class TransFuse_Sv2(nn.Module):
+    def __init__(self, num_classes=320, drop_rate=0.2, normal_init=True, pretrained=False):
+        super(TransFuse_Sv2, self).__init__()
 
+        #self.resnet = resnet()
+        self.transformer = Cait_fusev2(freeze=True)
+
+        self.resnet = myresnetv2_v2(freeze=True)
+
+
+        self.final_x = nn.Sequential(
+            Conv(256, 512 , 3,  bn=True, relu=True),
+            Conv(512, 1024, 3, stride=2, bn=True, relu=True),
+            nn.AdaptiveAvgPool2d((1,1))
+        )
+
+        self.up_c = BiFusion_block(ch_1=256, ch_2=192, r_2=4, ch_int=256, ch_out=256, drop_rate=drop_rate / 2)
+
+
+        self.drop = nn.Dropout2d(drop_rate)
+        self.head = nn.Linear(in_features=1024, out_features=num_classes)
+        self.avgpool = nn.AdaptiveAvgPool2d((14,14))
+        if normal_init:
+            self.init_weights()
+
+    def forward(self, imgs, labels=None):
+        # bottom-up path
+        x_b, cls_token = self.transformer(imgs)  # N X num_patches X embed_dim
+        x_b = torch.transpose(x_b, 1, 2) # N X embed_dim X num_patches
+        x_b = x_b.view(x_b.shape[0], -1, int(math.sqrt(x_b.shape[2])), int(math.sqrt(x_b.shape[2])))  # change done here N X 384 X 14 X 14
+        x_b = self.drop(x_b)   # N X embed_dim X sqrt(num_patches) X sqrt(num_patches)
+        x_b = self.avgpool(x_b)
+
+        x_u = self.resnet(imgs)
+        x_u = self.avgpool(x_u)
+        # joint path
+        x_c = self.up_c(x_u, x_b)   # N X 256 X 14 X 14
+
+        x = self.final_x(x_c)
+        x = x.reshape((x.shape[0], -1))
+        return self.head(x)
+
+
+    def init_weights(self):
+        self.final_x.apply(init_weights)
+
+        self.up_c.apply(init_weights)
+
+
+
+
+#############################################
 
 def init_weights(m):
     """
@@ -312,7 +364,92 @@ def myresnetv2(freeze =True):
     return model
 
 
+
+#######################################################################################
+class MyResnetv2_fusion_finetune_pretraining(nn.Module):
+    """
+    Using resnetv2 from timm library, Added another fc layer to project features to 512-dim before
+    passing to the classification head.
+    """
+
+    def __init__(self, freeze_layers=False):
+        super(MyResnetv2_fusion_finetune_pretraining, self).__init__()
+        model = timm.create_model('resnetv2_50x1_bitm', pretrained=True)
+        model.head = nn.Identity()
+        if freeze_layers:
+            for parameter in model.parameters():
+                parameter.requires_grad = False
+
+        self.model = model
+
+        self.head = nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
+                                   nn.Flatten(),
+                                   nn.Linear(in_features=2048, out_features=320),
+                                   )
+
+        # self.conv = nn.Sequential(
+        #     nn.Conv2d(1024, 256, 1),
+        #     nn.BatchNorm2d(256),
+        #     nn.ReLU()
+        # )
+
+    def forward(self, x):
+        x = self.model(x)
+        x = self.head(x)
+        return x
+
+
+def myresnetv2_finetune_pretraining(freeze =False):
+    model = MyResnetv2_fusion_finetune_pretraining(freeze_layers= freeze)
+    return model
+
+
+
+#########################################################################################
+
+
+##############################################################
+
+class MyResnetv2_fusionv2(nn.Module):
+    """
+    Using resnetv2 from timm library, Added another fc layer to project features to 512-dim before
+    passing to the classification head.
+    """
+
+    def __init__(self, freeze_layers=True):
+        super(MyResnetv2_fusionv2, self).__init__()
+        model = myresnetv2_finetune_pretraining()
+        path = "/home/hashmat.malik/Fall 2021/CV703 Lab/Week5/datasets/modelresnetv2-384_model_training_for_fusion_model_best.pth.tar"
+        checkpoint = torch.load(path)
+        model.load_state_dict(checkpoint['state_dict'])
+        model.head = nn.Identity()
+        if freeze_layers:
+            for parameter in model.parameters():
+                parameter.requires_grad = False
+        self.model = model
+        self.conv = nn.Sequential(
+             nn.Conv2d(1024, 256, 1),
+             nn.BatchNorm2d(256),
+             nn.ReLU()
+        )
+
+    def forward(self, x):
+        x= self.model.model.stem(x)
+        for idx, stage in enumerate(self.model.model.stages):
+
+            x = stage(x)
+            if idx == 2:
+                break
+        return  self.conv(x)
+
+def myresnetv2_v2(freeze =True):
+    model = MyResnetv2_fusionv2(freeze_layers= freeze)
+    return model
+
+
+############################################################
 if __name__ =="__main__":
     img = torch.randn(1, 3, 384, 384)
-    model = TransFuse_S()
+    model = TransFuse_Sv2()
     out = model(img)
+    print(out.shape)
