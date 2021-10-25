@@ -232,10 +232,12 @@ def food_dataset(data_dir = "./datasets/food_dataset",
 
     split = 'train'
     train_df = pd.read_csv(f'{data_dir}/{split}_labels.csv', names=['image_name', 'label'])
+    train_df = train_df.iloc[1:,:]
     train_df['path'] = train_df['image_name'].map(lambda x: os.path.join(f'{data_dir}/{split}_set/', x))
 
     split = 'val'
     val_df = pd.read_csv(f'{data_dir}/{split}_labels.csv', names=['image_name', 'label'])
+    val_df = val_df.iloc[1:, :]
     val_df['path'] = val_df['image_name'].map(lambda x: os.path.join(f'{data_dir}/{split}_set/', x))
     train_dataset = FOODDataset(train_df, transform=data_transform)
     test_dataset = FOODDataset(val_df, transform=test_transform)
